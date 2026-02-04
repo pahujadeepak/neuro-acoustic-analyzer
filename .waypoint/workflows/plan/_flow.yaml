@@ -1,0 +1,39 @@
+# Planning Workflow
+#
+# This file defines the step sequence for the plan phase.
+# Each step builds on the previous, with checkpoints for validation.
+#
+# To execute: /waypoint.plan <feature-name>
+# To resume: /waypoint.plan --resume <feature-name>
+#
+
+workflow:
+  id: plan
+  name: Planning
+  description: Break technical design into executable tasks
+  agent: scrum-master
+entryConditions:
+  - Approved technical plan from /waypoint.architect
+finalOutputs:
+  - .waypoint/tasks/{feature}/task-*.md
+steps:
+  - sequence: 1
+    id: review-plan
+    name: Review Technical Plan
+    file: ./review-plan.md
+    checkpoint: Do I understand what needs to be implemented?
+  - sequence: 2
+    id: identify-tasks
+    name: Identify Tasks
+    file: ./identify-tasks.md
+    checkpoint: Does this task list cover everything in the plan?
+  - sequence: 3
+    id: sequence-tasks
+    name: Sequence & Dependencies
+    file: ./sequence-tasks.md
+    checkpoint: Is the sequence logical? Are all dependencies identified?
+  - sequence: 4
+    id: write-tasks
+    name: Write Task Files
+    file: ./write-tasks.md
+    checkpoint: Does each task have complete context? No assumptions?

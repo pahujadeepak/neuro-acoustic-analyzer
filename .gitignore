@@ -1,0 +1,126 @@
+# ================================
+# Node.js / Next.js
+# ================================
+node_modules/
+.next/
+out/
+.vercel
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# ================================
+# Python / FastAPI
+# ================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+.env/
+pip-log.txt
+pip-delete-this-directory.txt
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ================================
+# Environment Variables
+# ================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.local.env
+
+# ================================
+# Audio Processing (Temp Files)
+# ================================
+audio-service/temp/
+audio-service/downloads/
+*.mp3
+*.wav
+*.m4a
+*.webm
+*.opus
+!audio-service/samples/*.mp3
+
+# ================================
+# IDE & Editors
+# ================================
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
+
+# ================================
+# OS Generated
+# ================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ================================
+# Testing
+# ================================
+coverage/
+.nyc_output/
+playwright-report/
+playwright/.cache/
+test-results/
+e2e-results/
+
+# ================================
+# Build & Output
+# ================================
+*.tsbuildinfo
+next-env.d.ts
+
+# ================================
+# Logs
+# ================================
+logs/
+*.log
+lerna-debug.log*
+
+# ================================
+# Misc
+# ================================
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+.turbo/
+
+# ================================
+# Docker (local volumes)
+# ================================
+docker-data/
+
+# ================================
+# Secrets (never commit)
+# ================================
+*.pem
+*.key
+credentials.json
+secrets.yaml
+secrets.yml

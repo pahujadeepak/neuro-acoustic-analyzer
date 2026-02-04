@@ -1,0 +1,39 @@
+# Discovery Workflow
+#
+# This file defines the step sequence for the discover phase.
+# Each step builds on the previous, with checkpoints for validation.
+#
+# To execute: /waypoint.discover <feature-name>
+# To resume: /waypoint.discover --resume <feature-name>
+#
+
+workflow:
+  id: discover
+  name: Discovery
+  description: Analyze existing codebase or explore problem space
+  agent: analyst
+entryConditions:
+  - New project or feature area to explore
+finalOutputs:
+  - .waypoint/specs/discovery.md
+steps:
+  - sequence: 1
+    id: understand-context
+    name: Understand Context
+    file: ./understand-context.md
+    checkpoint: Do I understand what we are trying to discover?
+  - sequence: 2
+    id: explore-landscape
+    name: Explore Landscape
+    file: ./explore-landscape.md
+    checkpoint: Do I have a high-level map of the territory?
+  - sequence: 3
+    id: identify-risks
+    name: Identify Risks & Constraints
+    file: ./identify-risks.md
+    checkpoint: Have I surfaced the key risks and constraints?
+  - sequence: 4
+    id: document-findings
+    name: Document Findings
+    file: ./document-findings.md
+    checkpoint: Does this document give a clear picture and actionable next steps?

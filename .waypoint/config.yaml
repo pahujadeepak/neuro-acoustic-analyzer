@@ -1,0 +1,33 @@
+# WayPoint Configuration
+# Generated: 2026-02-03T14:13:52.509Z
+
+project:
+  name: neuro-acoustic-analyzer
+  type: greenfield
+  track: solo
+  created: 2026-02-03T14:13:52.473Z
+stack:
+  id: nextjs-app-router
+  language: typescript
+  auth:
+    strategy: none
+  database:
+    type: postgresql
+    orm: prisma
+    migrations: prisma migrate
+architecture:
+  primary: ddd
+  modules: []
+deployment:
+  targets:
+    - vercel
+  primary: vercel
+  environments:
+    - development
+    - staging
+    - production
+testing:
+  unit: vitest
+  linter: eslint
+  formatter: prettier
+  typeChecker: tsc

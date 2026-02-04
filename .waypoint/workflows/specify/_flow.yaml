@@ -1,0 +1,35 @@
+# Specification Workflow
+#
+# This file defines the step sequence for the specify phase.
+# Each step builds on the previous, with checkpoints for validation.
+#
+# To execute: /waypoint.specify <feature-name>
+# To resume: /waypoint.specify --resume <feature-name>
+#
+
+workflow:
+  id: specify
+  name: Specification
+  description: Create a comprehensive feature specification
+  agent: product-manager
+entryConditions:
+  - Feature request or idea from user
+  - "Optional: Discovery document from /waypoint.discover"
+finalOutputs:
+  - .waypoint/specs/{feature}.md
+steps:
+  - sequence: 1
+    id: gather-context
+    name: Gather Context
+    file: ./gather-context.md
+    checkpoint: Do I understand what we are building and why? Ready to define user personas?
+  - sequence: 2
+    id: functional-requirements
+    name: Define Functional Requirements
+    file: ./functional-requirements.md
+    checkpoint: Does each requirement trace back to a user scenario? Are priorities clear?
+  - sequence: 3
+    id: finalize-spec
+    name: Finalize Specification
+    file: ./finalize-spec.md
+    checkpoint: Is the spec complete? Are all sections filled in? Ready for architecture phase?

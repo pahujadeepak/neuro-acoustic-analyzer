@@ -1,0 +1,413 @@
+# WayPoint Project Manifest
+#
+# This file is the central registry for your WayPoint project.
+# Claude reads this file first to understand project structure and state.
+#
+# Structure:
+#   - project: Basic project info
+#   - phases: Workflow phases with their agents and I/O patterns
+#   - agents: Agent personas with their capabilities
+#   - documents: Registry of specs, plans, and tasks with summaries
+#
+# Usage:
+#   - waypoint init: Generates this file
+#   - waypoint sync: Updates document registry from file system
+#   - Phase commands: Read this to understand current state
+#
+# Tips:
+#   - Add summaries and keywords when creating new documents
+#   - Update status as documents move through workflow
+#   - Use keywords for quick semantic lookup
+#
+# Generated: 2026-02-03T14:13:52.473Z
+
+waypoint:
+  version: "1.0"
+  generatedAt: 2026-02-03T14:13:52.473Z
+project:
+  name: neuro-acoustic-analyzer
+  type: greenfield
+  track: solo
+  rootPath: /workspaces/TestApp
+phases:
+  discover:
+    agent: analyst
+    description: Analyze existing codebase or explore problem space
+    inputs:
+      - user-request
+    outputs:
+      - .waypoint/specs/discovery.md
+  brainstorm:
+    agent: brainstorm-coach
+    description: Facilitate creative brainstorming session
+    inputs:
+      - user-request
+      - discovery.md
+    outputs:
+      - .waypoint/specs/brainstorm-{topic}.md
+  constitute:
+    agent: architect
+    description: Review and customize project constitution
+    inputs:
+      - .waypoint/constitution.md
+    outputs:
+      - .waypoint/constitution.md
+  specify:
+    agent: product-manager
+    description: Create feature specification document
+    inputs:
+      - user-request
+      - discovery.md
+    outputs:
+      - .waypoint/specs/{feature}.md
+    templates:
+      - .waypoint/templates/spec-template.md
+  clarify:
+    agent: analyst
+    description: Resolve specification ambiguities
+    inputs:
+      - .waypoint/specs/{feature}.md
+    outputs:
+      - .waypoint/specs/{feature}.md
+  architect:
+    agent: architect
+    description: Create technical design for specification
+    inputs:
+      - .waypoint/specs/{feature}.md
+      - .waypoint/constitution.md
+    outputs:
+      - .waypoint/plans/{feature}.md
+    templates:
+      - .waypoint/templates/plan-template.md
+  plan:
+    agent: scrum-master
+    description: Break technical design into executable tasks
+    inputs:
+      - .waypoint/plans/{feature}.md
+    outputs:
+      - .waypoint/tasks/{feature}/task-{n}.md
+    templates:
+      - .waypoint/templates/task-template.md
+  implement:
+    agent: developer
+    description: Implement task following project conventions
+    inputs:
+      - .waypoint/tasks/{feature}/task-{n}.md
+      - .waypoint/constitution.md
+    outputs:
+      - source-code
+      - tests
+  review:
+    agent: qa
+    description: Review implementation for quality and compliance
+    inputs:
+      - source-code
+      - tests
+      - .waypoint/tasks/{feature}/task-{n}.md
+    outputs:
+      - approval
+      - feedback
+  extend:
+    agent: module-architect
+    description: Add new stacks, architectures, or modules
+    inputs:
+      - user-request
+    outputs:
+      - module-definition
+agents:
+  analyst:
+    role: analyst
+    file: .claude/commands/waypoint/agents/analyst.md
+    capabilities:
+      - discover
+      - clarify
+      - risks
+      - questions
+      - analyze
+  brainstorm-coach:
+    role: brainstorm-coach
+    file: .claude/commands/waypoint/agents/brainstorm.md
+    capabilities:
+      - session
+      - techniques
+      - random
+      - organize
+      - ideate
+  product-manager:
+    role: product-manager
+    file: .claude/commands/waypoint/agents/pm.md
+    capabilities:
+      - spec
+      - story
+      - prioritize
+      - requirements
+  architect:
+    role: architect
+    file: .claude/commands/waypoint/agents/architect.md
+    capabilities:
+      - design
+      - review
+      - adr
+      - layers
+      - constitute
+  scrum-master:
+    role: scrum-master
+    file: .claude/commands/waypoint/agents/sm.md
+    capabilities:
+      - plan
+      - story
+      - estimate
+      - dependencies
+  developer:
+    role: developer
+    file: .claude/commands/waypoint/agents/dev.md
+    capabilities:
+      - implement
+      - test
+      - lint
+      - refactor
+  qa:
+    role: qa
+    file: .claude/commands/waypoint/agents/qa.md
+    capabilities:
+      - review
+      - security
+      - coverage
+      - checklist
+  module-architect:
+    role: module-architect
+    file: .claude/commands/waypoint/agents/modarch.md
+    capabilities:
+      - stack
+      - architecture
+      - examples
+      - validate
+  ux-designer:
+    role: ux-designer
+    file: .claude/commands/waypoint/agents/ux.md
+    capabilities:
+      - design
+      - experience-principles
+      - user-journey
+      - visual-foundation
+      - component-strategy
+      - a11y-audit
+      - lovable-prompt
+      - v0-prompt
+documents:
+  constitution: .waypoint/constitution.md
+  specs:
+    brainstorm-neuro-acoustic:
+      file: .waypoint/specs/brainstorm-neuro-acoustic.md
+      status: complete
+      summary: "Brainstorm session for neuro-acoustic analyzer - music analysis app that visualizes brain activation, emotions, frequencies, and brainwave states from YouTube audio"
+      keywords:
+        - youtube
+        - audio-analysis
+        - brain-regions
+        - emotions
+        - brainwaves
+        - frequency-spectrum
+        - visualization
+        - neuroscience
+    neuro-acoustic-analyzer:
+      file: .waypoint/specs/neuro-acoustic-analyzer.md
+      status: complete
+      summary: "Full product specification with user personas, scenarios, 10 functional requirements, non-functional requirements, UI layout, and compliance review"
+      keywords:
+        - specification
+        - requirements
+        - personas
+        - user-stories
+        - mvp
+        - functional-requirements
+        - ui-layout
+  plans:
+    neuro-acoustic-analyzer:
+      file: .waypoint/plans/neuro-acoustic-analyzer.md
+      status: complete
+      summary: "Full technical architecture with two-service design (Vercel + Railway), component structure, data models, API contracts, brain mapping algorithms, and deployment configuration"
+      keywords:
+        - architecture
+        - components
+        - api
+        - websocket
+        - librosa
+        - yt-dlp
+        - deployment
+        - brain-mapping
+  tasks:
+    neuro-acoustic-analyzer:
+      # Phase 1: Foundation (Frontend Core)
+      task-01-nextjs-init:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-01-nextjs-init.md
+        status: pending
+        phase: 1
+        summary: "Initialize Next.js 14 project with TypeScript, Tailwind CSS, and app router structure"
+        keywords: [nextjs, typescript, tailwind, setup]
+      task-02-domain-types:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-02-domain-types.md
+        status: pending
+        phase: 1
+        summary: "Define TypeScript interfaces for analysis types, brain regions, brainwaves, and emotions"
+        keywords: [types, interfaces, domain-model]
+      task-03-constants:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-03-constants.md
+        status: pending
+        phase: 1
+        summary: "Define constants for brain regions, brainwave states, and emotion metadata"
+        keywords: [constants, metadata, brain-regions, brainwaves, emotions]
+      task-04-url-input:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-04-url-input.md
+        status: pending
+        phase: 1
+        summary: "Build YouTube URL input component with validation and submit button"
+        keywords: [component, input, validation, youtube]
+      task-05-page-structure:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-05-page-structure.md
+        status: pending
+        phase: 1
+        summary: "Create home page and analyze page route structure"
+        keywords: [pages, routes, layout]
+      task-06-api-route:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-06-api-route.md
+        status: pending
+        phase: 1
+        summary: "Create /api/analyze endpoint skeleton with Zod validation"
+        keywords: [api, route, validation, zod]
+      # Phase 2: Audio Service (Python Backend)
+      task-07-fastapi-init:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-07-fastapi-init.md
+        status: pending
+        phase: 2
+        summary: "Initialize FastAPI Python project with Docker configuration"
+        keywords: [fastapi, python, docker, backend]
+      task-08-ytdlp-extraction:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-08-ytdlp-extraction.md
+        status: pending
+        phase: 2
+        summary: "Implement YouTube audio extraction using yt-dlp"
+        keywords: [yt-dlp, youtube, audio-extraction]
+      task-09-librosa-analysis:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-09-librosa-analysis.md
+        status: pending
+        phase: 2
+        summary: "Implement audio feature extraction with librosa (FFT, tempo, energy, spectral)"
+        keywords: [librosa, fft, audio-analysis, features]
+      task-10-brain-mapper:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-10-brain-mapper.md
+        status: pending
+        phase: 2
+        summary: "Rule-based mapping from audio features to brain region activations"
+        keywords: [brain-mapping, algorithm, neuroscience]
+      task-11-brainwave-predictor:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-11-brainwave-predictor.md
+        status: pending
+        phase: 2
+        summary: "Predict brainwave states (Delta, Theta, Alpha, Beta, Gamma) from audio features"
+        keywords: [brainwaves, prediction, algorithm]
+      task-12-emotion-classifier:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-12-emotion-classifier.md
+        status: pending
+        phase: 2
+        summary: "Classify emotions from audio features using rule-based system"
+        keywords: [emotions, classification, algorithm]
+      task-13-websocket-server:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-13-websocket-server.md
+        status: pending
+        phase: 2
+        summary: "Set up Socket.IO WebSocket server for streaming analysis results"
+        keywords: [websocket, socketio, streaming, realtime]
+      # Phase 3: Integration
+      task-14-connect-services:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-14-connect-services.md
+        status: pending
+        phase: 3
+        summary: "Connect Next.js API to audio service for analysis initiation"
+        keywords: [integration, api, service-connection]
+      task-15-websocket-client:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-15-websocket-client.md
+        status: pending
+        phase: 3
+        summary: "React hook for WebSocket connection and real-time updates"
+        keywords: [websocket, hook, react, client]
+      task-16-analysis-provider:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-16-analysis-provider.md
+        status: pending
+        phase: 3
+        summary: "React context provider for managing analysis state"
+        keywords: [context, provider, state-management]
+      task-17-video-player:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-17-video-player.md
+        status: pending
+        phase: 3
+        summary: "YouTube video player component with iframe embed"
+        keywords: [youtube, iframe, video-player]
+      # Phase 4: Visualization Components
+      task-18-brain-diagram:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-18-brain-diagram.md
+        status: pending
+        phase: 4
+        summary: "SVG brain visualization with dynamic region highlighting"
+        keywords: [visualization, svg, brain-diagram]
+      task-19-frequency-spectrum:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-19-frequency-spectrum.md
+        status: pending
+        phase: 4
+        summary: "Animated frequency spectrum visualization with color gradient"
+        keywords: [visualization, frequency, spectrum, chart]
+      task-20-brainwave-chart:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-20-brainwave-chart.md
+        status: pending
+        phase: 4
+        summary: "Brainwave activity chart showing all 5 wave types"
+        keywords: [visualization, brainwaves, chart]
+      task-21-emotion-badge:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-21-emotion-badge.md
+        status: pending
+        phase: 4
+        summary: "Emotion display component with emoji, color, and confidence"
+        keywords: [visualization, emotion, badge]
+      task-22-timeline-slider:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-22-timeline-slider.md
+        status: pending
+        phase: 4
+        summary: "Interactive timeline slider for scrubbing through analysis"
+        keywords: [visualization, timeline, slider, scrubbing]
+      task-23-analysis-panel:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-23-analysis-panel.md
+        status: pending
+        phase: 4
+        summary: "Main analysis panel composing all visualization components"
+        keywords: [component, layout, panel, integration]
+      # Phase 5: Polish & Deploy
+      task-24-error-handling:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-24-error-handling.md
+        status: pending
+        phase: 5
+        summary: "Comprehensive error handling with user-friendly messages and retry logic"
+        keywords: [errors, error-boundary, retry, recovery]
+      task-25-rate-limiting:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-25-rate-limiting.md
+        status: pending
+        phase: 5
+        summary: "Rate limiting on frontend and backend APIs"
+        keywords: [rate-limiting, api, security]
+      task-26-railway-deploy:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-26-railway-deploy.md
+        status: pending
+        phase: 5
+        summary: "Deploy Python audio service to Railway with Docker"
+        keywords: [deployment, railway, docker, backend]
+      task-27-vercel-deploy:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-27-vercel-deploy.md
+        status: pending
+        phase: 5
+        summary: "Deploy Next.js frontend to Vercel with environment configuration"
+        keywords: [deployment, vercel, frontend]
+      task-28-e2e-testing:
+        file: .waypoint/tasks/neuro-acoustic-analyzer/task-28-e2e-testing.md
+        status: pending
+        phase: 5
+        summary: "End-to-end testing with Playwright covering full user flow"
+        keywords: [testing, e2e, playwright, ci]

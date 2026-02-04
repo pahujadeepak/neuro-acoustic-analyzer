@@ -1,0 +1,55 @@
+# UX Design Workflow
+#
+# This file defines the step sequence for the design phase.
+# Each step builds on the previous, with checkpoints for validation.
+#
+# To execute: /waypoint.design <feature-name>
+# To resume: /waypoint.design --resume <feature-name>
+#
+
+workflow:
+  id: design
+  name: UX Design
+  description: Create frontend/UX specification from a PRD
+  agent: ux-designer
+entryConditions:
+  - Approved specification from /waypoint.specify
+  - User personas and scenarios defined
+finalOutputs:
+  - .waypoint/specs/{feature}-frontend-spec.md
+steps:
+  - sequence: 1
+    id: understand-users
+    name: Understand Users Deeply
+    file: ./understand-users.md
+    checkpoint: Do I understand what success FEELS like for each user type?
+  - sequence: 2
+    id: define-experience
+    name: Define Core Experience
+    file: ./define-experience.md
+    checkpoint: Could someone else design to these principles and get a similar feel?
+  - sequence: 3
+    id: map-user-journeys
+    name: Map User Journeys
+    file: ./map-user-journeys.md
+    checkpoint: Do these journeys cover the critical paths? Happy and unhappy?
+  - sequence: 4
+    id: visual-foundation
+    name: Establish Visual Foundation
+    file: ./visual-foundation.md
+    checkpoint: Would someone see this visual language and "get" the experience principles?
+  - sequence: 5
+    id: component-strategy
+    name: Define Component Strategy
+    file: ./component-strategy.md
+    checkpoint: Do these components cover all the journeys? Are they truly reusable?
+  - sequence: 6
+    id: accessibility-audit
+    name: Accessibility Audit
+    file: ./accessibility-audit.md
+    checkpoint: Would a user with disabilities have an equivalent experience?
+  - sequence: 7
+    id: finalize-frontend-spec
+    name: Finalize Frontend Specification
+    file: ./finalize-frontend-spec.md
+    checkpoint: Could a developer build from this? Could a designer refine from this?
