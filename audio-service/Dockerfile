@@ -20,5 +20,5 @@ RUN mkdir -p /tmp/audio
 # Expose ports
 EXPOSE 8000 8001
 
-# Run the application
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run the application with socket support
+CMD ["uvicorn", "src.main:asgi_app", "--host", "0.0.0.0", "--port", "8000"]
