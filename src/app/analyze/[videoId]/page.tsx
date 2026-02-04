@@ -1,6 +1,95 @@
 'use client';
 
 import { useParams, useSearchParams } from 'next/navigation';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { AnalysisProvider, useAnalysis } from '@/providers/analysis-provider';
+import { AnalysisPanel } from '@/components/analysis-panel';
+import { useWebSocket } from '@/hooks/use-websocket';
+import type { AnalysisSegment, SongAnalysis } from '@/lib/analysis/types';
+
+const AUDIO_SERVICE_URL = process.env.NEXT_PUBLIC_AUDIO_SERVICE_URL || 'http://localhost:8000';
+
+function AnalysisOrchestrator({ videoId, youtubeUrl }: { videoId: string; youtubeUrl: string | null }) {
+  const {
+    setStatus,
+    setProgress,
+    setError,
+    addSegment,
+    setAnalysis,
+    status,
+  } = useAnalysis();
+
+  const [jobId, setJobId] = useState<string | null>(null);
+  const analysisStarted = useRef(false);
+
+  // Start analysis when component mounts
+  useEffect(() => {
+    if (analysisStarted.current) return;
+    analysisStarted.current = true;
+
+    const startAnalysis = async () => {
+      setStatus('pending');
+      setProgress(0);
+
+      try {
+        const url = youtubeUrl || `https://www.youtube.com/watch?v=${videoId}`;
+
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ youtubeUrl: url }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to start analysis');
+        }
+
+        const data = await response.json();
+        setJobId(data.job_id);
+        setStatus('extracting');
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to start analysis');
+      }
+    };
+
+    startAnalysis();
+  }, [videoId, youtubeUrl, setStatus, setProgress, setError]);
+
+  // Handle WebSocket events
+  const handleProgress = useCallback((status: string, progress: number, message: string) => {
+    if (status === 'extracting') {
+      setStatus('extracting');
+    } else if (status === 'analyzing') {
+      setStatus('analyzing');
+    }
+    setProgress(progress);
+  }, [setStatus, setProgress]);
+
+  const handleChunk = useCallback((timestamp: number, segment: AnalysisSegment) => {
+    addSegment(segment);
+  }, [addSegment]);
+
+  const handleComplete = useCallback((analysis: SongAnalysis) => {
+    setAnalysis(analysis);
+  }, [setAnalysis]);
+
+  const handleError = useCallback((code: string, message: string) => {
+    setError(message);
+  }, [setError]);
+
+  // Connect to WebSocket when we have a jobId
+  useWebSocket({
+    url: AUDIO_SERVICE_URL,
+    jobId: jobId || '',
+    onProgress: handleProgress,
+    onChunk: handleChunk,
+    onComplete: handleComplete,
+    onError: handleError,
+  });
+
+  return <AnalysisPanel videoId={videoId} />;
+}
 
 export default function AnalyzePage() {
   const params = useParams();
@@ -17,45 +106,18 @@ export default function AnalyzePage() {
         </h1>
 
         <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-          <p className="text-gray-300">
+          <p className="text-gray-300 mb-2">
             Video ID: <code className="bg-gray-800 px-2 py-1 rounded text-cyan-400">{videoId}</code>
           </p>
           {url && (
-            <p className="text-gray-300 mt-2">
+            <p className="text-gray-300 mb-6">
               URL: <code className="bg-gray-800 px-2 py-1 rounded text-sm text-gray-400">{url}</code>
             </p>
           )}
 
-          {/* Video embed placeholder */}
-          <div className="mt-6 aspect-video bg-gray-800 rounded-lg flex items-center justify-center">
-            <iframe
-              src={`https://www.youtube.com/embed/${videoId}`}
-              title="YouTube video player"
-              className="w-full h-full rounded-lg"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-
-          <div className="mt-8 text-center text-gray-500">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-lg">
-              <svg className="animate-spin h-5 w-5 text-cyan-400" viewBox="0 0 24 24">
-                <circle
-                  className="opacity-25"
-                  cx="12" cy="12" r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  fill="none"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                />
-              </svg>
-              <span>Analysis components coming soon...</span>
-            </div>
-          </div>
+          <AnalysisProvider>
+            <AnalysisOrchestrator videoId={videoId} youtubeUrl={url} />
+          </AnalysisProvider>
         </div>
       </div>
     </div>

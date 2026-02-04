@@ -43,6 +43,11 @@ export function useWebSocket({
   }, []);
 
   useEffect(() => {
+    // Don't connect if no jobId
+    if (!jobId) {
+      return;
+    }
+
     const socket = io(url, {
       transports: ['websocket'],
       reconnection: true,
