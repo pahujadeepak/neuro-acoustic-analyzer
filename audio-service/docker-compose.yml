@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  audio-service:
+    build: .
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    environment:
+      - ALLOWED_ORIGINS=http://localhost:3000
+      - TEMP_DIR=/tmp/audio
+    volumes:
+      - ./src:/app/src
+      - audio-temp:/tmp/audio
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  audio-temp:
