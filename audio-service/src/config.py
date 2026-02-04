@@ -9,8 +9,13 @@ class Settings(BaseSettings):
     port: int = 8000
     ws_port: int = 8001
 
-    # CORS
-    allowed_origins: List[str] = ["http://localhost:3000"]
+    # CORS - supports multiple origins for local dev and production
+    # Set ALLOWED_ORIGINS env var as comma-separated list for production
+    # e.g., "https://your-app.vercel.app,https://your-preview.vercel.app"
+    allowed_origins: List[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
 
     # Audio processing
     temp_dir: str = "/tmp/audio"

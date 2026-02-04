@@ -197,6 +197,18 @@ agents:
 documents:
   constitution: .waypoint/constitution.md
   specs:
+    vercel-deployment-discovery:
+      file: .waypoint/specs/vercel-deployment-discovery.md
+      status: complete
+      summary: "Deployment feasibility analysis - Next.js can deploy to Vercel, Python backend requires Railway/Render/Fly.io due to ffmpeg, librosa size limits, and WebSocket requirements"
+      keywords:
+        - deployment
+        - vercel
+        - railway
+        - render
+        - docker
+        - websocket
+        - limitations
     brainstorm-neuro-acoustic:
       file: .waypoint/specs/brainstorm-neuro-acoustic.md
       status: complete
