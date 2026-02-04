@@ -1,8 +1,9 @@
 'use client';
 
+import { useCallback } from 'react';
 import { useAnalysis } from '@/providers/analysis-provider';
 import { VideoPlayer } from '@/components/video-player';
-import { BrainDiagram } from '@/components/visualizations/brain-diagram';
+import { Brain2D } from '@/components/visualizations/brain-2d';
 import { FrequencySpectrum } from '@/components/visualizations/frequency-spectrum';
 import { BrainwaveChart } from '@/components/visualizations/brainwave-chart';
 import { EmotionBadge } from '@/components/visualizations/emotion-badge';
@@ -24,13 +25,14 @@ export function AnalysisPanel({ videoId }: AnalysisPanelProps) {
     setCurrentTime,
   } = useAnalysis();
 
-  const handleTimeUpdate = (time: number) => {
+  // Stabilize callback to prevent player recreation
+  const handleTimeUpdate = useCallback((time: number) => {
     setCurrentTime(time);
-  };
+  }, [setCurrentTime]);
 
-  const handleSeek = (time: number) => {
+  const handleSeek = useCallback((time: number) => {
     setCurrentTime(time);
-  };
+  }, [setCurrentTime]);
 
   if (status === 'pending' || status === 'extracting' || status === 'analyzing') {
     return (
@@ -80,43 +82,35 @@ export function AnalysisPanel({ videoId }: AnalysisPanelProps) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
-          <VideoPlayer
-            videoId={videoId}
-            onTimeUpdate={handleTimeUpdate}
-            className="w-full"
-          />
-        </div>
-
-        <div className="bg-gray-900/50 rounded-xl p-4">
-          <h3 className="text-sm font-medium text-gray-400 mb-4">Brain Activity</h3>
-          <BrainDiagram
-            activations={currentSegment?.brainRegions || null}
-            className="h-64"
-          />
-        </div>
+      {/* Video Player */}
+      <div className="bg-gray-900/50 rounded-xl overflow-hidden">
+        <VideoPlayer
+          videoId={videoId}
+          onTimeUpdate={handleTimeUpdate}
+          className="w-full"
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-gray-900/50 rounded-xl p-4">
-          <h3 className="text-sm font-medium text-gray-400 mb-4">Emotional State</h3>
-          <EmotionBadge emotion={currentSegment?.emotion || null} />
-        </div>
-
-        <div className="bg-gray-900/50 rounded-xl p-4">
-          <BrainwaveChart brainwaves={currentSegment?.brainwaves || null} />
-        </div>
-
-        <div className="bg-gray-900/50 rounded-xl p-4">
-          <h3 className="text-sm font-medium text-gray-400 mb-4">Frequency Spectrum</h3>
-          <FrequencySpectrum frequencies={currentSegment?.frequencies || null} />
-        </div>
+      {/* Timeline - Positioned right below video for easy scrubbing */}
+      <div className="bg-gray-900/50 rounded-xl p-4">
+        <h3 className="text-sm font-medium text-gray-400 mb-3">
+          Timeline
+          <span className="ml-2 text-xs text-gray-500">
+            (hover for second-by-second analysis)
+          </span>
+        </h3>
+        <TimelineSlider
+          currentTime={currentTime}
+          duration={duration}
+          segments={segments}
+          onSeek={handleSeek}
+        />
       </div>
 
+      {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
-          label="Segments"
+          label="Segments Analyzed"
           value={segments.length.toString()}
           unit=""
         />
@@ -137,13 +131,35 @@ export function AnalysisPanel({ videoId }: AnalysisPanelProps) {
         />
       </div>
 
+      {/* Brain Activity Visualization */}
       <div className="bg-gray-900/50 rounded-xl p-4">
-        <TimelineSlider
-          currentTime={currentTime}
-          duration={duration}
-          segments={segments}
-          onSeek={handleSeek}
-        />
+        <h3 className="text-sm font-medium text-gray-400 mb-4">
+          Brain Activity Map
+          <span className="ml-2 text-xs text-gray-500">
+            (lateral view - colors show activation intensity)
+          </span>
+        </h3>
+        <Brain2D activations={currentSegment?.brainRegions || null} />
+      </div>
+
+      {/* Analysis Details Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Emotional State */}
+        <div className="bg-gray-900/50 rounded-xl p-4">
+          <h3 className="text-sm font-medium text-gray-400 mb-4">Emotional State</h3>
+          <EmotionBadge emotion={currentSegment?.emotion || null} />
+        </div>
+
+        {/* Brainwave Activity */}
+        <div className="bg-gray-900/50 rounded-xl p-4">
+          <BrainwaveChart brainwaves={currentSegment?.brainwaves || null} />
+        </div>
+
+        {/* Frequency Spectrum */}
+        <div className="bg-gray-900/50 rounded-xl p-4">
+          <h3 className="text-sm font-medium text-gray-400 mb-4">Frequency Spectrum</h3>
+          <FrequencySpectrum frequencies={currentSegment?.frequencies || null} />
+        </div>
       </div>
     </div>
   );

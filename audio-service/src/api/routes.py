@@ -33,7 +33,8 @@ async def start_analysis(request: AnalyzeRequest, background_tasks: BackgroundTa
     """Start analysis of a YouTube video."""
     job_id = f"job_{request.video_id}"
 
-    # Check if job already exists and is complete
+    # Check if job already exists and is complete - return cached status
+    # Frontend will fetch the analysis data separately
     if job_id in jobs and jobs[job_id].get("status") == "complete":
         return AnalyzeResponse(
             job_id=job_id,
@@ -42,7 +43,16 @@ async def start_analysis(request: AnalyzeRequest, background_tasks: BackgroundTa
             websocket_url=f"ws://localhost:8000"
         )
 
-    # Initialize job
+    # Check if job is in progress
+    if job_id in jobs and jobs[job_id].get("status") in ["pending", "extracting", "analyzing"]:
+        return AnalyzeResponse(
+            job_id=job_id,
+            video_id=request.video_id,
+            status=jobs[job_id].get("status", "pending"),
+            websocket_url=f"ws://localhost:8000"
+        )
+
+    # Initialize new job
     jobs[job_id] = {
         "status": "pending",
         "progress": 0,
@@ -212,3 +222,28 @@ async def get_job_status(job_id: str):
         progress=job.get("progress", 0),
         error=job.get("error")
     )
+
+
+@router.get("/job/{job_id}/analysis")
+async def get_job_analysis(job_id: str):
+    """Get the analysis data for a completed job."""
+    if job_id not in jobs:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    job = jobs[job_id]
+    if job.get("status") != "complete":
+        raise HTTPException(status_code=400, detail="Analysis not complete")
+
+    analysis = job.get("analysis")
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis data not found")
+
+    return analysis
+
+
+@router.delete("/job/{job_id}")
+async def delete_job(job_id: str):
+    """Delete a job to allow re-analysis."""
+    if job_id in jobs:
+        del jobs[job_id]
+    return {"status": "deleted", "job_id": job_id}

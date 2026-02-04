@@ -22,6 +22,21 @@ function AnalysisOrchestrator({ videoId, youtubeUrl }: { videoId: string; youtub
   const [jobId, setJobId] = useState<string | null>(null);
   const analysisStarted = useRef(false);
 
+  // Fetch cached analysis for completed jobs
+  const fetchCachedAnalysis = useCallback(async (jobId: string) => {
+    try {
+      const response = await fetch(`${AUDIO_SERVICE_URL}/api/job/${jobId}/analysis`);
+      if (response.ok) {
+        const analysis = await response.json();
+        setAnalysis(analysis);
+        return true;
+      }
+    } catch (err) {
+      console.error('Failed to fetch cached analysis:', err);
+    }
+    return false;
+  }, [setAnalysis]);
+
   // Start analysis when component mounts
   useEffect(() => {
     if (analysisStarted.current) return;
@@ -47,20 +62,35 @@ function AnalysisOrchestrator({ videoId, youtubeUrl }: { videoId: string; youtub
 
         const data = await response.json();
         setJobId(data.job_id);
-        setStatus('extracting');
+
+        // If job is already complete, fetch the cached analysis
+        if (data.status === 'complete') {
+          setStatus('analyzing');
+          setProgress(99);
+          const success = await fetchCachedAnalysis(data.job_id);
+          if (!success) {
+            // If we can't get cached data, delete the job and retry
+            await fetch(`${AUDIO_SERVICE_URL}/api/job/${data.job_id}`, { method: 'DELETE' });
+            analysisStarted.current = false;
+            // Trigger re-analysis
+            window.location.reload();
+          }
+        } else {
+          setStatus('extracting');
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to start analysis');
       }
     };
 
     startAnalysis();
-  }, [videoId, youtubeUrl, setStatus, setProgress, setError]);
+  }, [videoId, youtubeUrl, setStatus, setProgress, setError, fetchCachedAnalysis]);
 
   // Handle WebSocket events
-  const handleProgress = useCallback((status: string, progress: number, message: string) => {
-    if (status === 'extracting') {
+  const handleProgress = useCallback((wsStatus: string, progress: number, message: string) => {
+    if (wsStatus === 'extracting') {
       setStatus('extracting');
-    } else if (status === 'analyzing') {
+    } else if (wsStatus === 'analyzing') {
       setStatus('analyzing');
     }
     setProgress(progress);
