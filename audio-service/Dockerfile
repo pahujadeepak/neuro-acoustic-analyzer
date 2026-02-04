@@ -1,8 +1,9 @@
 FROM python:3.11-slim
 
-# Install system dependencies
+# Install system dependencies for audio processing
 RUN apt-get update && apt-get install -y \
     ffmpeg \
+    libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -14,11 +15,17 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY src/ ./src/
 
-# Create temp directory
-RUN mkdir -p /tmp/audio
+# Create non-root user for security
+RUN adduser --disabled-password --gecos '' appuser
+RUN mkdir -p /tmp/audio && chown -R appuser:appuser /app /tmp/audio
+USER appuser
 
-# Expose ports
-EXPOSE 8000 8001
+# Expose port
+EXPOSE 8000
 
-# Run the application with socket support
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+
+# Run application
 CMD ["uvicorn", "src.main:asgi_app", "--host", "0.0.0.0", "--port", "8000"]

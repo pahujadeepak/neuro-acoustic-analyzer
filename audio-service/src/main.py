@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from src.api.routes import router
 from src.config import settings
 from src.websocket.server import sio
+from src.middleware.rate_limit import rate_limit_middleware
 
 load_dotenv()
 
@@ -16,6 +17,9 @@ app = FastAPI(
     description="Audio extraction and analysis service",
     version="1.0.0",
 )
+
+# Add rate limiting middleware
+app.middleware("http")(rate_limit_middleware)
 
 # CORS configuration
 app.add_middleware(
