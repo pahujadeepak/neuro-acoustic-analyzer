@@ -38,9 +38,9 @@ class YouTubeExtractor:
             'no_warnings': True,
         }
 
-        # Check for cookies file path
-        cookies_file = os.environ.get('YOUTUBE_COOKIES_FILE')
-        if cookies_file and os.path.exists(cookies_file):
+        # Check for cookies - either as file path or content in env var
+        cookies_file = self._get_cookies_file()
+        if cookies_file:
             opts['cookiefile'] = cookies_file
             logger.info(f"Using cookies file: {cookies_file}")
 
@@ -50,6 +50,27 @@ class YouTubeExtractor:
             opts['extractor_args'] = {'youtube': {'po_token': [po_token]}}
 
         return opts
+
+    def _get_cookies_file(self) -> str | None:
+        """Get cookies file path, creating from env var if needed."""
+        # Option 1: Direct file path
+        cookies_file = os.environ.get('YOUTUBE_COOKIES_FILE')
+        if cookies_file and os.path.exists(cookies_file):
+            return cookies_file
+
+        # Option 2: Cookies content in environment variable
+        cookies_content = os.environ.get('YOUTUBE_COOKIES')
+        if cookies_content:
+            cookies_path = os.path.join(self.output_dir, 'cookies.txt')
+            try:
+                with open(cookies_path, 'w') as f:
+                    f.write(cookies_content)
+                logger.info(f"Created cookies file from env var: {cookies_path}")
+                return cookies_path
+            except Exception as e:
+                logger.error(f"Failed to write cookies file: {e}")
+
+        return None
 
     def _get_ydl_opts(self, output_path: str) -> dict:
         """Get yt-dlp options for audio extraction."""
