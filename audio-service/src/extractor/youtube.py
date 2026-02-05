@@ -31,9 +31,30 @@ class YouTubeExtractor:
         self.output_dir = output_dir or settings.temp_dir
         os.makedirs(self.output_dir, exist_ok=True)
 
+    def _get_base_opts(self) -> dict:
+        """Get base yt-dlp options with cookie support."""
+        opts = {
+            'quiet': True,
+            'no_warnings': True,
+        }
+
+        # Check for cookies file path
+        cookies_file = os.environ.get('YOUTUBE_COOKIES_FILE')
+        if cookies_file and os.path.exists(cookies_file):
+            opts['cookiefile'] = cookies_file
+            logger.info(f"Using cookies file: {cookies_file}")
+
+        # Use PO Token if available (helps with bot detection)
+        po_token = os.environ.get('YOUTUBE_PO_TOKEN')
+        if po_token:
+            opts['extractor_args'] = {'youtube': {'po_token': [po_token]}}
+
+        return opts
+
     def _get_ydl_opts(self, output_path: str) -> dict:
         """Get yt-dlp options for audio extraction."""
-        return {
+        opts = self._get_base_opts()
+        opts.update({
             'format': 'bestaudio/best',
             'outtmpl': output_path,
             'postprocessors': [{
@@ -41,18 +62,17 @@ class YouTubeExtractor:
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
-            'quiet': True,
-            'no_warnings': True,
             'extract_flat': False,
-        }
+        })
+        return opts
 
     def _get_info_opts(self) -> dict:
         """Get yt-dlp options for info extraction only."""
-        return {
-            'quiet': True,
-            'no_warnings': True,
+        opts = self._get_base_opts()
+        opts.update({
             'extract_flat': True,
-        }
+        })
+        return opts
 
     async def get_video_info(self, url: str) -> VideoInfo:
         """Get video information without downloading."""
