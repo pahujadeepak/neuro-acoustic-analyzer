@@ -31,24 +31,38 @@ class YouTubeExtractor:
         self.output_dir = output_dir or settings.temp_dir
         os.makedirs(self.output_dir, exist_ok=True)
 
-    def _get_base_opts(self) -> dict:
+    def _get_base_opts(self, use_cookies: bool = True) -> dict:
         """Get base yt-dlp options with cookie support."""
         opts = {
-            'quiet': True,
-            'no_warnings': True,
+            'quiet': False,  # Enable output for debugging
+            'no_warnings': False,
+            'verbose': True,
+        }
+
+        # Use specific client to avoid SABR streaming issues
+        # See: https://github.com/yt-dlp/yt-dlp/issues/12482
+        extractor_args = {
+            'youtube': {
+                # Use tv and web clients which work better with cookies
+                'player_client': ['tv', 'web'],
+                # Skip problematic clients
+                'player_skip': ['android', 'ios'],
+            }
         }
 
         # Check for cookies - either as file path or content in env var
-        cookies_file = self._get_cookies_file()
-        if cookies_file:
-            opts['cookiefile'] = cookies_file
-            logger.info(f"Using cookies file: {cookies_file}")
+        if use_cookies:
+            cookies_file = self._get_cookies_file()
+            if cookies_file:
+                opts['cookiefile'] = cookies_file
+                logger.info(f"Using cookies file: {cookies_file}")
 
         # Use PO Token if available (helps with bot detection)
         po_token = os.environ.get('YOUTUBE_PO_TOKEN')
         if po_token:
-            opts['extractor_args'] = {'youtube': {'po_token': [po_token]}}
+            extractor_args['youtube']['po_token'] = [po_token]
 
+        opts['extractor_args'] = extractor_args
         return opts
 
     def _get_cookies_file(self) -> str | None:
@@ -72,9 +86,9 @@ class YouTubeExtractor:
 
         return None
 
-    def _get_ydl_opts(self, output_path: str) -> dict:
+    def _get_ydl_opts(self, output_path: str, use_cookies: bool = True) -> dict:
         """Get yt-dlp options for audio extraction."""
-        opts = self._get_base_opts()
+        opts = self._get_base_opts(use_cookies=use_cookies)
         opts.update({
             # Use 'ba' (best audio) or fallback to worst quality if needed
             # This is the most permissive format selector
@@ -134,8 +148,8 @@ class YouTubeExtractor:
         output_template = os.path.join(self.output_dir, f"{video_id}")
         final_path = f"{output_template}.mp3"
 
-        def _download():
-            opts = self._get_ydl_opts(output_template)
+        def _download(use_cookies: bool = True):
+            opts = self._get_ydl_opts(output_template, use_cookies=use_cookies)
 
             with yt_dlp.YoutubeDL(opts) as ydl:
                 info = ydl.extract_info(url, download=True)
@@ -151,7 +165,19 @@ class YouTubeExtractor:
             logger.info(f"Starting extraction for video: {video_id}")
 
             loop = asyncio.get_event_loop()
-            video_info = await loop.run_in_executor(None, _download)
+
+            # Try with cookies first, then without if format error occurs
+            try:
+                logger.info("Attempting download with cookies...")
+                video_info = await loop.run_in_executor(None, lambda: _download(use_cookies=True))
+            except yt_dlp.DownloadError as e:
+                error_msg = str(e).lower()
+                # If format not available, try without cookies (cookies can cause this)
+                if 'format' in error_msg and 'not available' in error_msg:
+                    logger.warning("Format error with cookies, retrying without cookies...")
+                    video_info = await loop.run_in_executor(None, lambda: _download(use_cookies=False))
+                else:
+                    raise
 
             # Verify file exists
             if not os.path.exists(final_path):
