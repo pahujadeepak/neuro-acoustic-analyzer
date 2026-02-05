@@ -31,31 +31,41 @@ class YouTubeExtractor:
         self.output_dir = output_dir or settings.temp_dir
         os.makedirs(self.output_dir, exist_ok=True)
 
-    def _get_base_opts(self, use_cookies: bool = True) -> dict:
-        """Get base yt-dlp options with cookie support."""
+    def _get_base_opts(self, use_cookies: bool = False) -> dict:
+        """Get base yt-dlp options.
+
+        Note: By default, we don't use cookies because:
+        1. Cookies require tv/web clients which need JavaScript runtime
+        2. android_vr client works without cookies and doesn't need JS
+        """
         opts = {
             'quiet': False,  # Enable output for debugging
             'no_warnings': False,
             'verbose': True,
         }
 
-        # Use specific client to avoid SABR streaming issues
-        # See: https://github.com/yt-dlp/yt-dlp/issues/12482
-        extractor_args = {
-            'youtube': {
-                # Use tv and web clients which work better with cookies
-                'player_client': ['tv', 'web'],
-                # Skip problematic clients
-                'player_skip': ['android', 'ios'],
-            }
-        }
-
-        # Check for cookies - either as file path or content in env var
+        # Configure extractor based on whether we're using cookies
         if use_cookies:
+            # With cookies: use tv/web clients (requires JS runtime)
+            extractor_args = {
+                'youtube': {
+                    'player_client': ['tv', 'web'],
+                    'player_skip': ['android', 'ios'],
+                }
+            }
             cookies_file = self._get_cookies_file()
             if cookies_file:
                 opts['cookiefile'] = cookies_file
                 logger.info(f"Using cookies file: {cookies_file}")
+        else:
+            # Without cookies: let yt-dlp use android_vr (no JS needed)
+            extractor_args = {
+                'youtube': {
+                    # android_vr works without JS runtime and without cookies
+                    'player_client': ['android_vr'],
+                }
+            }
+            logger.info("Using android_vr client (no cookies)")
 
         # Use PO Token if available (helps with bot detection)
         po_token = os.environ.get('YOUTUBE_PO_TOKEN')
@@ -86,7 +96,7 @@ class YouTubeExtractor:
 
         return None
 
-    def _get_ydl_opts(self, output_path: str, use_cookies: bool = True) -> dict:
+    def _get_ydl_opts(self, output_path: str, use_cookies: bool = False) -> dict:
         """Get yt-dlp options for audio extraction."""
         opts = self._get_base_opts(use_cookies=use_cookies)
         opts.update({
@@ -166,16 +176,17 @@ class YouTubeExtractor:
 
             loop = asyncio.get_event_loop()
 
-            # Try with cookies first, then without if format error occurs
+            # Try WITHOUT cookies first (android_vr client, no JS needed)
+            # Then try WITH cookies if bot detection occurs
             try:
-                logger.info("Attempting download with cookies...")
-                video_info = await loop.run_in_executor(None, lambda: _download(use_cookies=True))
+                logger.info("Attempting download without cookies (android_vr client)...")
+                video_info = await loop.run_in_executor(None, lambda: _download(use_cookies=False))
             except yt_dlp.DownloadError as e:
                 error_msg = str(e).lower()
-                # If format not available, try without cookies (cookies can cause this)
-                if 'format' in error_msg and 'not available' in error_msg:
-                    logger.warning("Format error with cookies, retrying without cookies...")
-                    video_info = await loop.run_in_executor(None, lambda: _download(use_cookies=False))
+                # If bot detection, try with cookies
+                if 'bot' in error_msg or 'sign in' in error_msg:
+                    logger.warning("Bot detection, retrying with cookies...")
+                    video_info = await loop.run_in_executor(None, lambda: _download(use_cookies=True))
                 else:
                     raise
 
