@@ -76,7 +76,8 @@ class YouTubeExtractor:
         """Get yt-dlp options for audio extraction."""
         opts = self._get_base_opts()
         opts.update({
-            'format': 'bestaudio/best',
+            # More flexible format selection - try audio first, fallback to any
+            'format': 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best[height<=480]/best',
             'outtmpl': output_path,
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
@@ -84,6 +85,9 @@ class YouTubeExtractor:
                 'preferredquality': '192',
             }],
             'extract_flat': False,
+            # Additional options for compatibility
+            'prefer_ffmpeg': True,
+            'keepvideo': False,
         })
         return opts
 
