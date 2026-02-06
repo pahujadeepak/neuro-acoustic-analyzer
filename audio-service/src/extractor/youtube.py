@@ -83,7 +83,9 @@ class YouTubeExtractor:
         # This is required because auto-detection may fail in containerized environments
         node_path = find_node_path()
         if node_path:
-            opts['js_runtimes'] = f'node:{node_path}'
+            opts['js_runtimes'] = {
+                'node': {'path': node_path}
+            }
             logger.info(f"Configured yt-dlp to use Node.js at: {node_path}")
 
         # Use tv/web clients with cookies (requires JS runtime - Node.js installed in Docker)
