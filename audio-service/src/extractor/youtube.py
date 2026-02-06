@@ -1,6 +1,8 @@
 import os
 import asyncio
 import logging
+import shutil
+import subprocess
 from typing import Optional
 from dataclasses import dataclass
 import yt_dlp
@@ -8,6 +10,40 @@ import yt_dlp
 from src.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def find_node_path() -> str | None:
+    """Find the Node.js binary path."""
+    # Check common locations
+    common_paths = [
+        '/usr/bin/node',
+        '/usr/local/bin/node',
+        '/opt/nodejs/bin/node',
+    ]
+
+    for path in common_paths:
+        if os.path.exists(path) and os.access(path, os.X_OK):
+            logger.info(f"Found Node.js at: {path}")
+            return path
+
+    # Try using shutil.which (searches PATH)
+    node_path = shutil.which('node')
+    if node_path:
+        logger.info(f"Found Node.js via PATH: {node_path}")
+        return node_path
+
+    # Try running 'which node' as a fallback
+    try:
+        result = subprocess.run(['which', 'node'], capture_output=True, text=True)
+        if result.returncode == 0 and result.stdout.strip():
+            path = result.stdout.strip()
+            logger.info(f"Found Node.js via 'which': {path}")
+            return path
+    except Exception as e:
+        logger.debug(f"'which node' failed: {e}")
+
+    logger.warning("Node.js not found - JS challenge solving may fail")
+    return None
 
 
 @dataclass
@@ -42,6 +78,13 @@ class YouTubeExtractor:
             'no_warnings': False,
             'verbose': True,
         }
+
+        # Explicitly tell yt-dlp where Node.js is located
+        # This is required because auto-detection may fail in containerized environments
+        node_path = find_node_path()
+        if node_path:
+            opts['js_runtimes'] = f'node:{node_path}'
+            logger.info(f"Configured yt-dlp to use Node.js at: {node_path}")
 
         # Use tv/web clients with cookies (requires JS runtime - Node.js installed in Docker)
         extractor_args = {
