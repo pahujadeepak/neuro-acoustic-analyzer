@@ -79,7 +79,8 @@ class YouTubeExtractor:
             'verbose': True,
             # Enable downloading the EJS (External JavaScript Solver) from GitHub
             # This is required to solve YouTube's JavaScript challenges
-            'remote_components': {'ejs': 'github'},
+            # Format is a SET with string values, not a dict
+            'remote_components': {'ejs:github'},
         }
 
         # Explicitly tell yt-dlp where Node.js is located
